@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patients Dashboard - Smart Token System</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+    --primary: #4AB0A6;
+    --secondary: #2C7A7B;
+    --background: #E6F4F1;
+    --white: #FFFFFF;
+    --text: #333333;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    background: var(--background);
+    color: var(--text);
+}
+
+header, footer {
+    background: var(--primary);
+    color: var(--white);
+    padding: 15px 30px;
+}
+
+header a, footer a {
+    color: var(--white);
+    text-decoration: none;
+    margin-right: 20px;
+}
+
+header a:hover {
+    color: var(--secondary);
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px;
+}
+
+/* Dashboard Layout */
+.dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+/* Appointments & History */
+#appointments, #history-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.appointment-card, .history-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    transition: transform 0.2s, opacity 0.2s;
+    position: relative;
+}
+
+.appointment-info, .history-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.cancel-btn {
+    background: #FF6B6B;
+    border: none;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.cancel-btn:hover {
+    background: #FF4C4C;
+}
+
+.history-card {
+    border-left: 4px solid var(--secondary);
+}
+
+.history-card::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 15px;
+    width: 12px;
+    height: 12px;
+    background: var(--secondary);
+    border-radius: 50%;
+}
+
+.history-status {
+    font-weight: 500;
+    margin-top: 5px;
+}
+
+.status-completed { color: green; }
+.status-cancelled { color: red; }
+.status-pending { color: orange; }
+
+/* Modals */
+.modal {
+    display: none;
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--white);
+    padding: 25px;
+    border-radius: 12px;
+    max-width: 400px;
+    text-align: center;
+}
+
+.modal-buttons {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-around;
+}
+
+.modal-buttons button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.confirm-btn { background: var(--secondary); color: white; }
+.cancel-modal-btn { background: #ccc; color: #333; }
+
+#reschedule-timer {
+    margin-top: 15px;
+    font-weight: 600;
+    color: var(--secondary);
+}
+</style>
+</head>
+<body>
+
+<header>
+    <a href="landing page.html">Home</a>
+    <a href="history.html" class="active">Appointments</a>
+    <a href="profile.html">Profile</a>
+    <a href="logout.html">Logout</a>
+</header>
+
+<div class="container dashboard">
+
+    <h2>My Appointments & Patient ID</h2>
+    <div id="appointments">
+        <!-- Mock Data Rendered Here -->
+    </div>
+
+    <h2>Patient History</h2>
+    <div class="history-timeline" id="history-timeline">
+        <!-- Mock Data Rendered Here -->
+    </div>
+
+</div>
+
+<!-- Cancel Confirmation Modal -->
+<div class="modal" id="cancelModal">
+    <div class="modal-content">
+        <p>Are you sure? Canceling now will keep your smart token active for future appointments!</p>
+        <div class="modal-buttons">
+            <button class="confirm-btn" onclick="confirmCancel()">Yes, Cancel</button>
+            <button class="cancel-modal-btn" onclick="closeCancelModal()">No</button>
+        </div>
+    </div>
+</div>
+
+<!-- Reschedule Suggestion Modal -->
+<div class="modal" id="rescheduleModal">
+    <div class="modal-content">
+        <p>Your appointment was canceled. Would you like to reschedule?</p>
+        <div id="reschedule-timer">Auto closing in 10s...</div>
+        <div class="modal-buttons">
+            <button class="confirm-btn" onclick="reschedule()">Reschedule Now</button>
+            <button class="cancel-modal-btn" onclick="closeRescheduleModal()">Maybe Later</button>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <p>&copy; 2025 MediQueue. All Rights Reserved.</p>
+</footer>
+
+<script>
+// Mock Data
+const mockAppointments = [
+    {
+        department: "Cardiology",
+        patientId: "P123456",
+        name: "Ram",
+        date: "2025-09-25",
+        slot: "10:30 AM - 11:00 AM",
+        tokenNo: "T001",
+        symptoms: "Chest pain"
+    },
+    {
+        department: "Dermatology",
+        patientId: "P654321",
+        name: "Janani",
+        date: "2025-09-26",
+        slot: "02:00 PM - 02:30 PM",
+        tokenNo: "T002",
+        symptoms: "Skin rash"
+    }
+];
+
+const mockHistory = [
+    {
+        department: "Orthopedics",
+        patientId: "P789012",
+        name: "Michael",
+        date: "2025-09-15",
+        slot: "11:00 AM - 11:30 AM",
+        tokenNo: "T100",
+        symptoms: "Knee pain",
+        status: "Completed"
+    },
+    {
+        department: "ENT",
+        patientId: "P345678",
+        name: "Sophia",
+        date: "2025-09-10",
+        slot: "03:00 PM - 03:30 PM",
+        tokenNo: "T101",
+        symptoms: "Hearing issues",
+        status: "Cancelled"
+    }
+];
+
+// Render mock data
+const appointmentsDiv = document.getElementById("appointments");
+const historyDiv = document.getElementById("history-timeline");
+
+mockAppointments.forEach(data=>{
+    const card = document.createElement("div");
+    card.className = "appointment-card";
+    card.innerHTML = `
+        <div class="appointment-info">
+            <div><strong>Department:</strong> ${data.department}</div>
+            <div><strong>Patient ID:</strong> ${data.patientId} <button onclick="copyPatientID('${data.patientId}')">Copy</button></div>
+            <div><strong>Name:</strong> ${data.name}</div>
+            <div><strong>Date:</strong> ${data.date}, ${data.slot}</div>
+            <div><strong>Token No:</strong> ${data.tokenNo}</div>
+            <div><strong>Symptoms:</strong> ${data.symptoms}</div>
+        </div>
+        <button class="cancel-btn" onclick="openCancelModal(this)">Cancel</button>
+    `;
+    appointmentsDiv.appendChild(card);
+});
+
+mockHistory.forEach(data=>{
+    const card = document.createElement("div");
+    card.className = "history-card";
+    card.innerHTML = `
+        <div class="history-info">
+            <div><strong>Department:</strong> ${data.department}</div>
+            <div><strong>Patient ID:</strong> ${data.patientId}</div>
+            <div><strong>Name:</strong> ${data.name}</div>
+            <div><strong>Date:</strong> ${data.date}, ${data.slot}</div>
+            <div><strong>Token No:</strong> ${data.tokenNo}</div>
+            <div><strong>Symptoms:</strong> ${data.symptoms}</div>
+        </div>
+    `;
+    const statusDiv = document.createElement("div");
+    statusDiv.className = `history-status status-${data.status.toLowerCase()}`;
+    statusDiv.innerText = data.status;
+    card.appendChild(statusDiv);
+    historyDiv.appendChild(card);
+});
+
+// Copy Patient ID
+function copyPatientID(id){
+    navigator.clipboard.writeText(id)
+        .then(()=> alert("Patient ID copied: " + id))
+        .catch(err=> alert("Failed to copy Patient ID: " + err));
+}
+
+// Cancel modal functions
+let currentCard = null;
+let rescheduleCountdown = 10;
+let countdownInterval;
+
+function openCancelModal(btn) {
+    currentCard = btn.closest('.appointment-card');
+    document.getElementById('cancelModal').style.display = 'flex';
+}
+
+function closeCancelModal() {
+    document.getElementById('cancelModal').style.display = 'none';
+    currentCard = null;
+}
+
+function confirmCancel() {
+    if(currentCard){
+        currentCard.remove();
+        alert("Appointment cancelled! Your smart token remains active for future use.");
+    }
+    closeCancelModal();
+    openRescheduleModal();
+}
+
+// Reschedule modal functions
+function openRescheduleModal() {
+    document.getElementById('rescheduleModal').style.display = 'flex';
+    rescheduleCountdown = 10;
+    document.getElementById('reschedule-timer').innerText = `Auto closing in ${rescheduleCountdown}s...`;
+    countdownInterval = setInterval(() => {
+        rescheduleCountdown--;
+        document.getElementById('reschedule-timer').innerText = `Auto closing in ${rescheduleCountdown}s...`;
+        if(rescheduleCountdown <= 0){
+            closeRescheduleModal();
+        }
+    }, 1000);
+}
+
+function closeRescheduleModal() {
+    clearInterval(countdownInterval);
+    document.getElementById('rescheduleModal').style.display = 'none';
+}
+
+function reschedule() {
+    clearInterval(countdownInterval);
+    closeRescheduleModal();
+    alert("Redirecting to reschedule page...");
+    // window.location.href = "/reschedule.html";
+}
+</script>
+</body>
+</html>

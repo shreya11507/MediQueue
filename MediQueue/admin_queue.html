@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MediQueue Admin – Live Queue</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --primary: #4AB0A6;
+      --secondary: #2C7A7B;
+      --background: #E6F4F1;
+      --surface: #ffffff;
+      --muted: #8AA6A3;
+      --text: #333333;
+      --danger: #E76F51;
+      --warning: #F4A261;
+      --success: #2A9D8F;
+      --info: #3A86FF;
+      --border: #d5e6e3;
+    }
+    * { box-sizing: border-box; margin:0; padding:0; }
+    body { font-family: 'Poppins', sans-serif; background: var(--background); color: var(--text); }
+
+    .app {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      grid-template-rows: 64px 1fr;
+      grid-template-areas:
+        "header header"
+        "sidebar main";
+      min-height: 100vh;
+    }
+    header {
+      grid-area: header;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      color:#fff; display:flex; align-items:center; justify-content:space-between;
+      padding: 0 20px; height:64px;
+    }
+    header .toolbar { display:flex; gap:12px; align-items:center; }
+    header button { background:#fff2; border:none; border-radius:8px; padding:6px 12px; color:#fff; cursor:pointer; }
+
+    .sidebar {
+      grid-area: sidebar;
+      background: var(--secondary); color:#fff; padding:20px 14px;
+    }
+    .brand { font-weight:700; font-size:18px; margin-bottom:16px; }
+    .nav { display:grid; gap:8px; }
+    .nav button {
+      all:unset; cursor:pointer; padding:12px 14px; border-radius:12px;
+      color:#fff; display:flex; align-items:center; gap:8px; width:100%;
+    }
+    .nav button.active { background: rgba(255,255,255,0.12); font-weight:700; border-left:4px solid var(--background); padding-left:10px; }
+
+    main { grid-area: main; padding:24px; }
+    .filters { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+    .filters input, .filters select {
+      border:1px solid var(--border); border-radius:8px; padding:8px 12px; font-family:inherit;
+    }
+    .filters .spacer { flex:1; }
+
+    table { width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+    th, td { padding:12px 14px; text-align:left; border-bottom:1px solid var(--border); }
+    th { background:#f9f9f9; font-weight:600; font-size:14px; }
+    tr:last-child td { border-bottom:none; }
+
+    .status { padding:4px 10px; border-radius:12px; font-size:12px; font-weight:500; display:inline-block; }
+    .status.waiting { background:#e0f7f4; color:var(--success); }
+    .status.inprogress { background:#fff0d6; color:#b7791f; }
+    .status.completed { background:#e6f7e9; color:var(--success); }
+    .status.cancelled { background:#ffe0e0; color:var(--danger); }
+
+    .actions button {
+      margin:2px; padding:6px 10px; font-size:12px;
+      border-radius:8px; border:none; cursor:pointer;
+    }
+    .actions .start { background:var(--info); color:#fff; }
+    .actions .complete { background:var(--success); color:#fff; }
+    .actions .cancel { background:var(--danger); color:#fff; }
+    .actions .skip { background:var(--warning); color:#fff; }
+    .actions .revert { background:#ddd; color:#333; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="toolbar">
+        <strong>Admin Panel</strong>
+        <span class="muted">— Manage bookings, queue & insights</span>
+      </div>
+      <div class="toolbar">
+        <button id="exportCsv">⬇️ Export CSV</button>
+        <button id="openHelp">❓ Help</button>
+      </div>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">🏥 MediQueue Admin</div>
+      <nav class="nav">
+        <button onclick="location.href='admin_dashboard.html'" class="active">📊 Dashboard</button>
+        <button onclick="location.href='availability.html'">🗓️ Doctor Availability</button>
+        <button onclick="location.href='admin_queue.html'">📋 Live Queue</button>
+        <button onclick="location.href='report.html'">📈 Reports</button>
+      </nav>
+    </aside>
+
+    <main>
+      <div class="filters">
+        <select id="filterDoctor">
+          <option value="all">All Doctors</option>
+          <option>Dr. Aisha Khan</option>
+          <option>Dr. Rohit Mehta</option>
+          <option>Dr. Priya Sharma</option>
+          <option>Dr. Arjun Patel</option>
+        </select>
+        <input type="date" id="filterDate" value="2025-09-15"/>
+        <select id="filterStatus">
+          <option value="all">Status: All</option>
+          <option value="waiting">Waiting</option>
+          <option value="inprogress">In Progress</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <div class="spacer"></div>
+        <input type="text" id="searchBox" placeholder="Search name/token..."/>
+      </div>
+
+      <table id="queueTable">
+        <thead>
+          <tr>
+            <th>Token</th>
+            <th>Patient</th>
+            <th>Time</th>
+            <th>Doctor</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </main>
+  </div>
+
+  <script>
+    let queueData = [
+      { token:"0001", patient:"Diya Kapoor", time:"09:00", doctor:"Dr. Aisha Khan", status:"inprogress", date:"2025-09-15" },
+      { token:"0002", patient:"Anaya Singh", time:"09:15", doctor:"Dr. Aisha Khan", status:"waiting", date:"2025-09-15" },
+      { token:"0003", patient:"Raghav Malhotra", time:"09:30", doctor:"Dr. Aisha Khan", status:"waiting", date:"2025-09-15" },
+      { token:"0004", patient:"Zoya Khan", time:"09:45", doctor:"Dr. Rohit Mehta", status:"completed", date:"2025-09-15" },
+      { token:"0005", patient:"Aarav Sharma", time:"10:00", doctor:"Dr. Rohit Mehta", status:"waiting", date:"2025-09-15" },
+      { token:"0006", patient:"Ishita Verma", time:"10:15", doctor:"Dr. Rohit Mehta", status:"cancelled", date:"2025-09-15" },
+      { token:"0007", patient:"Kabir Gupta", time:"10:30", doctor:"Dr. Priya Sharma", status:"inprogress", date:"2025-09-15" },
+      { token:"0008", patient:"Mira Joshi", time:"10:45", doctor:"Dr. Priya Sharma", status:"waiting", date:"2025-09-15" },
+      { token:"0009", patient:"Samar Bhatia", time:"11:00", doctor:"Dr. Arjun Patel", status:"waiting", date:"2025-09-15" },
+      { token:"0010", patient:"Nisha Reddy", time:"11:15", doctor:"Dr. Arjun Patel", status:"completed", date:"2025-09-15" },
+    ];
+
+    function renderQueue() {
+      const tbody = document.querySelector("#queueTable tbody");
+      tbody.innerHTML = "";
+
+      const doctorFilter = document.getElementById("filterDoctor").value;
+      const statusFilter = document.getElementById("filterStatus").value;
+      const searchQuery = document.getElementById("searchBox").value.toLowerCase();
+      const dateFilter = document.getElementById("filterDate").value;
+
+      const filteredData = queueData.filter(item => {
+        const doctorMatch = doctorFilter === "all" || item.doctor === doctorFilter;
+        const statusMatch = statusFilter === "all" || item.status === statusFilter;
+        const searchMatch = item.patient.toLowerCase().includes(searchQuery) || item.token.includes(searchQuery);
+        const dateMatch = !dateFilter || item.date === dateFilter;
+        return doctorMatch && statusMatch && searchMatch && dateMatch;
+      });
+
+      filteredData.forEach(item => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${item.token}</td>
+          <td>${item.patient}</td>
+          <td>${item.time}</td>
+          <td>${item.doctor}</td>
+          <td><span class="status ${item.status}">${statusLabel(item.status)}</span></td>
+          <td class="actions">
+            <button class="start">Start</button>
+            <button class="complete">Complete</button>
+            <button class="cancel">Cancel</button>
+            <button class="skip">Skip</button>
+            <button class="revert">Revert</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+
+        // attach button actions
+        tr.querySelector(".start").addEventListener("click", () => updateStatus(item.token, "inprogress"));
+        tr.querySelector(".complete").addEventListener("click", () => updateStatus(item.token, "completed"));
+        tr.querySelector(".cancel").addEventListener("click", () => updateStatus(item.token, "cancelled"));
+        tr.querySelector(".skip").addEventListener("click", () => updateStatus(item.token, "waiting"));
+        tr.querySelector(".revert").addEventListener("click", () => updateStatus(item.token, "waiting"));
+      });
+    }
+
+    function updateStatus(token, newStatus) {
+      const record = queueData.find(item => item.token === token);
+      if (record) {
+        record.status = newStatus;
+        renderQueue();
+      }
+    }
+
+    function statusLabel(status) {
+      switch(status) {
+        case "waiting": return "Waiting";
+        case "inprogress": return "In Progress";
+        case "completed": return "Completed";
+        case "cancelled": return "Cancelled";
+        default: return status;
+      }
+    }
+
+    // event listeners for filters
+    document.getElementById("filterDoctor").addEventListener("change", renderQueue);
+    document.getElementById("filterStatus").addEventListener("change", renderQueue);
+    document.getElementById("searchBox").addEventListener("input", renderQueue);
+    document.getElementById("filterDate").addEventListener("change", renderQueue);
+
+    renderQueue();
+  </script>
+</body>
+</html>

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MediQueue – Admin Dashboard</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+    }
+    
+    body {
+      display: flex;
+      height: 100vh;
+      background: #f8fbfb;
+      color: #333;
+      overflow: hidden;
+    }
+    .sidebar {
+      width: 250px;
+      background: #146C72;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      padding: 20px 0;
+    }
+    .sidebar h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    .sidebar a {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 500;
+      border-left: 4px solid transparent;
+      transition: all 0.3s ease;
+    }
+    .sidebar a.active, .sidebar a:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-left: 4px solid #fff;
+    }
+    .sidebar a span {
+      margin-left: 10px;
+    }
+    .main {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .topbar h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #146C72;
+    }
+    .topbar-right {
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .btn-primary {
+      background: #146C72;
+      color: white;
+    }
+    .btn-secondary {
+      background: #e6f5f5;
+      color: #146C72;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #146C72;
+    }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .toolbar label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #555;
+    }
+    .toolbar select, .toolbar input {
+      margin-left: 5px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+    .cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .kpi {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      text-align: center;
+      border: 1px solid #eee;
+    }
+    .kpi h3 {
+      font-size: 15px;
+      margin-bottom: 5px;
+    }
+    .kpi .muted {
+      font-size: 13px;
+      color: #888;
+    }
+    .kpi .value {
+      font-size: 28px;
+      font-weight: 700;
+      margin-top: 10px;
+      color: #146C72;
+    }
+    .chart-container {
+      height: 250px;
+    }
+    .chart-container canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>🏥MediQueue Admin</h2>
+    <a href="admin_dashboard.html" class="active">📊Dashboard</a>
+    <a href="availability.html">🗓️Doctor Availability</a>
+    <a href="admin_queue.html">📋Live Queue</a>
+    <a href="report.html">📈Reports</a>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <h1>Admin Panel — Manage bookings, queue & insights</h1>
+      <div class="topbar-right">
+        <button class="btn btn-primary">⬇ Export CSV</button>
+        <button class="btn btn-secondary">❓ Help</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Daily / Weekly Summary</h3>
+      <div class="toolbar">
+        <label>
+          Range
+          <select id="rRange">
+            <option value="today">Today</option>
+            <option value="last7">Last 7 Days</option>
+            <option value="custom">Custom</option>
+          </select>
+        </label>
+        <label>
+          From <input type="date" id="rFrom" />
+        </label>
+        <label>
+          To <input type="date" id="rTo" />
+        </label>
+        <div class="spacer" style="flex:1"></div>
+        <button class="btn btn-primary" id="refreshBtn">⟳ Refresh</button>
+      </div>
+
+      <div class="grid cols-3">
+        <div class="card kpi"><h3>Total Tokens</h3><div class="muted">Selected range</div><div class="value" id="totalTokens">0</div></div>
+        <div class="card kpi"><h3>Completed</h3><div class="muted">Selected range</div><div class="value" id="completed">0</div></div>
+        <div class="card kpi"><h3>Cancelled</h3><div class="muted">Selected range</div><div class="value" id="cancelled">0</div></div>
+      </div>
+
+      <div class="grid cols-2" style="margin-top:16px;">
+        <div class="card chart-container">
+          <h3>Daily Trend</h3>
+          <canvas id="trendChart"></canvas>
+        </div>
+        <div class="card chart-container">
+          <h3>Top Doctors (Utilization)</h3>
+          <canvas id="topDocChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const trendCtx = document.getElementById('trendChart').getContext('2d');
+    const topDocCtx = document.getElementById('topDocChart').getContext('2d');
+
+    let trendChart = new Chart(trendCtx, {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: 'Tokens', data: [], borderColor: '#146C72', backgroundColor: 'rgba(20,108,114,0.1)', fill: true }] },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    let topDocChart = new Chart(topDocCtx, {
+      type: 'bar',
+      data: { labels: [], datasets: [{ label: 'Utilization', data: [], backgroundColor: '#146C72' }] },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    const kpi = {
+      total: document.getElementById('totalTokens'),
+      completed: document.getElementById('completed'),
+      cancelled: document.getElementById('cancelled')
+    };
+
+    function loadMockData(range) {
+      if (range === 'today') {
+        kpi.total.textContent = 18;
+        kpi.completed.textContent = 14;
+        kpi.cancelled.textContent = 2;
+        trendChart.data.labels = ['9 AM','10 AM','11 AM','12 PM','1 PM','2 PM','3 PM'];
+        trendChart.data.datasets[0].data = [2,4,3,5,2,1,1];
+        topDocChart.data.labels = ['Dr. Aisha','Dr. Rohan','Dr. Nisha'];
+        topDocChart.data.datasets[0].data = [6,7,5];
+      } 
+      else if (range === 'last7') {
+        kpi.total.textContent = 120;
+        kpi.completed.textContent = 95;
+        kpi.cancelled.textContent = 15;
+        trendChart.data.labels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+        trendChart.data.datasets[0].data = [15,18,20,17,25,10,15];
+        topDocChart.data.labels = ['Dr. Aisha','Dr. Rohan','Dr. Nisha'];
+        topDocChart.data.datasets[0].data = [40,45,35];
+      } 
+      else if (range === 'custom') {
+        // Fix date range: e.g. Sept 1 to Sept 7, 2025
+        kpi.total.textContent = 75;
+        kpi.completed.textContent = 60;
+        kpi.cancelled.textContent = 5;
+        trendChart.data.labels = ['Sept 1','Sept 2','Sept 3','Sept 4','Sept 5','Sept 6','Sept 7'];
+        trendChart.data.datasets[0].data = [10,12,8,15,9,11,10];
+        topDocChart.data.labels = ['Dr. Aisha','Dr. Rohan','Dr. Nisha'];
+        topDocChart.data.datasets[0].data = [25,30,20];
+      }
+
+      trendChart.update();
+      topDocChart.update();
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      const range = document.getElementById('rRange').value;
+      loadMockData(range);
+    });
+
+    // Initial load
+    loadMockData('today');
+  </script>
+</body>
+</html>

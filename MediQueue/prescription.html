@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Smart Prescription Assistant</title>
+
+<!-- Google Fonts: Poppins -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root { 
+  --primary: #4AB0A6; 
+  --secondary: #2C7A7B; 
+  --background: #E6F4F1; 
+  --white: #FFFFFF; 
+  --text: #333333; 
+}
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: var(--background);
+  color: var(--text);
+  display: flex;
+  justify-content: center;
+  padding: 30px;
+}
+.container {
+  width: 100%;
+  max-width: 900px;
+  background: var(--white);
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+}
+h1 {
+  text-align: center;
+  color: var(--secondary);
+  margin-bottom: 25px;
+}
+.info-boxes {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-bottom: 25px;
+}
+.info-box {
+  flex: 1 1 150px;
+}
+.info-box input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 2px solid #ccc;
+  font-size: 14px;
+}
+.section {
+  margin-bottom: 25px;
+  position: relative;
+}
+label {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 8px;
+}
+input[type=text] {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  font-size: 15px;
+  outline: none;
+}
+input[type=text]:focus {
+  border-color: var(--primary);
+}
+.suggestions {
+  border: 1px solid #ccc;
+  background: var(--white);
+  border-radius: 8px;
+  margin-top: 5px;
+  max-height: 150px;
+  overflow-y: auto;
+  display: none;
+  position: absolute;
+  z-index: 1000;
+  width: calc(100% - 30px);
+}
+.suggestion-item {
+  padding: 10px;
+  cursor: pointer;
+}
+.suggestion-item:hover {
+  background: var(--background);
+}
+.medicine-list {
+  margin-top: 15px;
+}
+.medicine-item {
+  background: #f9f9f9;
+  border: 2px dashed var(--primary);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.medicine-item select,
+.medicine-item input[type=number],
+.medicine-item select.meal,
+.medicine-item select.mealtime {
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+.medicine-item button {
+  background: #FF4B4B;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.medicine-item button:hover {
+  background: #CC0000;
+}
+.buttons {
+  text-align: center;
+  margin-top: 25px;
+}
+button {
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  padding: 12px 20px;
+  margin: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  transition: background 0.3s;
+}
+button:hover {
+  background: var(--secondary);
+}
+.output-box {
+  background: #f9f9f9;
+  border: 2px dashed var(--primary);
+  border-radius: 10px;
+  padding: 15px;
+  min-height: 100px;
+  white-space: pre-line;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Smart Prescription Assistant</h1>
+
+  <!-- Info Boxes -->
+  <div class="info-boxes">
+    <div class="info-box">
+      <label>Doctor Name</label>
+      <input type="text" value="Aakash" readonly/>
+    </div>
+    <div class="info-box">
+      <label>Department</label>
+      <input type="text" value="General Medicine" readonly/>
+    </div>
+    <div class="info-box">
+      <label>Patient Name</label>
+      <input type="text" value="Shreya" readonly/>
+    </div>
+    <div class="info-box">
+      <label>Age</label>
+      <input type="text" value="18" readonly/>
+    </div>
+    <div class="info-box">
+      <label>Sex</label>
+      <input type="text" value="Female" readonly/>
+    </div>
+  </div>
+
+  <!-- Doctor Input -->
+  <div class="section">
+    <label for="doctorInput">Add Medicines</label>
+    <input type="text" id="doctorInput" placeholder="Type medicine"/>
+    <div id="suggestions" class="suggestions"></div>
+  </div>
+
+  <!-- Selected Medicines -->
+  <div class="medicine-list" id="medicineList"></div>
+
+  <div class="buttons">
+    <button onclick="summarizePrescription()">Submit & Preview</button>
+    <button onclick="savePrescription()">💾 Save Prescription</button>
+  </div>
+
+  <!-- Patient-Friendly Prescription -->
+  <div class="section">
+    <label>Patient-Friendly Prescription</label>
+    <div id="patientPrescription" class="output-box">
+      Add medicines and dosage to see patient-friendly summary here.
+    </div>
+  </div>
+</div>
+
+<!-- Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+const medicines = {
+  "PCM": "TAB PCM 500mg",
+  "IBUP": "TAB IBUP 400mg",
+  "CET": "TAB CET 10mg",
+  "RANT": "TAB RANT 150mg",
+  "PANTO": "TAB PANTO 40mg",
+  "AMOX": "CAP AMOX 500mg",
+  "AZI": "TAB AZI 500mg",
+  "MET": "TAB MET 500mg",
+  "ATOR": "TAB ATOR 10mg",
+  "LOSA": "TAB LOSA 50mg",
+  "DICLO": "TAB DICLO 50mg",
+  "DOM": "TAB DOM 10mg",
+  "LEV": "TAB LEV 500mg",
+  "OMEP": "CAP OMEP 20mg",
+  "TELM": "TAB TELM 40mg"
+};
+
+// ✅ Full names mapping
+const medFullNames = {
+  "PCM": "Paracetamol",
+  "IBUP": "Ibuprofen",
+  "CET": "Cetirizine",
+  "RANT": "Ranitidine",
+  "PANTO": "Pantoprazole",
+  "AMOX": "Amoxicillin",
+  "AZI": "Azithromycin",
+  "MET": "Metformin",
+  "ATOR": "Atorvastatin",
+  "LOSA": "Losartan",
+  "DICLO": "Diclofenac",
+  "DOM": "Domperidone",
+  "LEV": "Levofloxacin",
+  "OMEP": "Omeprazole",
+  "TELM": "Telmisartan"
+};
+
+const doctorInput = document.getElementById("doctorInput");
+const suggestionsBox = document.getElementById("suggestions");
+const medicineList = document.getElementById("medicineList");
+const patientBox = document.getElementById("patientPrescription");
+let selectedMeds = [];
+
+doctorInput.addEventListener("input", function() {
+  const query = doctorInput.value.toUpperCase();
+  suggestionsBox.innerHTML = "";
+  if (!query) { suggestionsBox.style.display = "none"; return; }
+  const matches = Object.keys(medicines).filter(key => key.startsWith(query) && !selectedMeds.includes(key));
+  if (matches.length > 0 && selectedMeds.length < 3) {
+    suggestionsBox.style.display = "block";
+    matches.forEach(match => {
+      const div = document.createElement("div");
+      div.classList.add("suggestion-item");
+      div.textContent = `${match} → ${medicines[match]}`;
+      div.onclick = () => { addMedicine(match); doctorInput.value=""; suggestionsBox.style.display="none"; };
+      suggestionsBox.appendChild(div);
+    });
+  } else { suggestionsBox.style.display = "none"; }
+});
+
+function addMedicine(code) {
+  if (selectedMeds.length >=3 || selectedMeds.includes(code)) return;
+  selectedMeds.push(code);
+
+  const div = document.createElement("div");
+  div.classList.add("medicine-item");
+  div.setAttribute("data-code", code);
+
+  div.innerHTML = `
+    <span><b>${code}</b> → ${medicines[code]}</span>
+    <div>
+      Qty: <input type="number" class="quantity" value="1" min="1" style="width:60px"/>
+      Duration: <select class="duration">
+        <option value="once daily">once daily</option>
+        <option value="twice daily">twice daily</option>
+        <option value="thrice daily">thrice daily</option>
+        <option value="for 5 days">for 5 days</option>
+        <option value="for 7 days">for 7 days</option>
+      </select>
+      Timing: <select class="timing">
+        <option value="Breakfast">Breakfast</option>
+        <option value="Lunch">Lunch</option>
+        <option value="Dinner">Dinner</option>
+      </select>
+      Meal: <select class="meal">
+        <option value="Before Meal">Before Meal</option>
+        <option value="After Meal">After Meal</option>
+      </select>
+      <button type="button" onclick="removeMedicine('${code}', this)">Remove</button>
+    </div>
+  `;
+  medicineList.appendChild(div);
+}
+
+function removeMedicine(code, btn) {
+  selectedMeds = selectedMeds.filter(c => c !== code);
+  btn.closest(".medicine-item").remove();
+}
+
+function summarizePrescription() {
+  const patientName = "Shreya";
+  const age = 18;
+  const sex = "Female";
+  const doctorName = "Aakash";
+  const department = "General Medicine";
+  const date = new Date().toLocaleDateString();
+
+  let summary = `Patient: ${patientName}\nAge/Sex: ${age} / ${sex}\nDoctor: ${doctorName}\nDepartment: ${department}\nDate: ${date}\n\nPrescription:\n`;
+
+  const items = document.querySelectorAll(".medicine-item");
+  let count = 1;
+  items.forEach(item => {
+    const code = item.getAttribute("data-code");
+    const qty = item.querySelector(".quantity").value;
+    const duration = item.querySelector(".duration").value;
+    const timing = item.querySelector(".timing").value;
+    const meal = item.querySelector(".meal").value;
+
+    // ✅ Use full name if available, else fallback to code
+    const fullName = medFullNames[code] ? `(${medFullNames[code]})` : "";
+
+    summary += `${count}. ${medicines[code]} ${fullName}: ${qty} tablets, ${duration}, ${timing}, ${meal}\n`;
+    count++;
+  });
+
+  patientBox.textContent = summary || "Please add medicines first.";
+}
+
+function savePrescription() {
+  summarizePrescription();
+  html2canvas(patientBox).then(canvas => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const imgData = canvas.toDataURL("image/png");
+    const imgProps = doc.getImageProperties(imgData);
+    const pdfWidth = doc.internal.pageSize.getWidth() - 20;
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    doc.addImage(imgData, 'PNG', 10, 10, pdfWidth, pdfHeight);
+    doc.save("Prescription.pdf");
+    alert("Prescription saved successfully!");
+  });
+}
+</script>
+</body>
+</html>

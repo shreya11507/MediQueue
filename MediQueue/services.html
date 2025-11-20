@@ -1,0 +1,260 @@
+<!-- Services Page -->
+
+<!-- Header Section -->
+<header class="header">
+  <div class="logo">
+    <img src="https://cdn-icons-png.flaticon.com/512/6205/6205008.png" alt="MediQueue Logo" style="height:40px; vertical-align:middle; margin-right:8px;">
+    MediQueue
+  </div>
+  <nav class="nav-links">
+    <a href="home.html">Home</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="services.html" class="active">Services</a>
+    <a href="logout.html">Logout</a>
+  </nav>
+</header>
+
+<div class="main-layout">
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar">
+    <ul>
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="book-token.html">Book Token</a></li>
+      <li><a href="my-tokens.html">My Tokens</a></li>
+      <li><a href="services.html" class="active">Services</a></li>
+      <li><a href="profile.html">Profile</a></li>
+      <li><a href="settings.html">Settings</a></li>
+    </ul>
+  </aside>
+
+  <!-- Services Content -->
+  <div class="services-content">
+    <h2>Our Hospital Services </h2>
+    <p class="subtitle">Choose a department to view doctors and book tokens instantly.</p>
+
+    <div class="services-grid">
+      <!-- Service Cards -->
+     
+        <div class="service-card">
+
+        <h3>General Medicine 💊</h3>
+        <p>Consultation for common illnesses and preventive care.</p>
+        <span class="timing">Available: 8 AM – 8 PM</span>
+        <button onclick="bookService('General Medicine')">Book Token</button>
+      </div>
+       
+       <div class="service-card">
+        <h3>Cardiology 🫀</h3>
+        <p>Specialized care for heart-related issues with expert cardiologists.</p>
+        <span class="timing">Available: 9 AM – 5 PM</span>
+        <button onclick="bookService('Cardiology')">Book Token</button>
+      </div>
+
+      <div class="service-card">
+        <h3>Gynecology 🤰</h3>
+        <p>Specialized women’s healthcare and maternity services.</p>
+        <span class="timing">Available: 9 AM – 5 PM</span>
+        <button onclick="bookService('Gynecology')">Book Token</button>
+      </div>
+
+      <div class="service-card">
+        <h3>Orthopedics 🦴</h3>
+        <p>Treatment for bones, joints, and muscle problems.</p>
+        <span class="timing">Available: 10 AM – 6 PM</span>
+        <button onclick="bookService('Orthopedics')">Book Token</button>
+      </div>
+
+      <div class="service-card">
+        <h3>Neurology 🧠</h3>
+        <p>Expert care for brain and nervous system disorders.</p>
+        <span class="timing">Available: 10 AM – 2 PM</span>
+        <button onclick="bookService('Neurology')">Book Token</button>
+      </div>
+
+      <div class="service-card">
+        <h3>ENT 👂👃</h3>
+        <p>Treatment for ear, nose, and throat conditions.</p>
+        <span class="timing">Available: 10 AM – 6 PM</span>
+        <button onclick="bookService('ENT')">Book Token</button>
+      </div>
+
+      <div class="service-card">
+        <h3>Pediatrics 👶</h3>
+        <p>Comprehensive care for children and adolescents.</p>
+        <span class="timing">Available: 9 AM – 3 PM</span>
+        <button onclick="bookService('Pediatrics')">Book Token</button>
+      </div>
+
+      <div class="service-card">
+        <h3>Dermatology 🧴</h3>
+        <p>Advanced skin, hair, and cosmetic treatments.</p>
+        <span class="timing">Available: 11 AM – 4 PM</span>
+        <button onclick="bookService('Dermatology')">Book Token</button>
+      </div>
+
+      <div class="service-card">
+        <h3>Ophthalmology 👁️</h3>
+        <p>Eye care, vision correction, and surgery.</p>
+        <span class="timing">Available: 9 AM – 5 PM</span>
+        <button onclick="bookService('Ophthalmology')">Book Token</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  :root {
+    --primary: #4AB0A6;
+    --secondary: #2C7A7B;
+    --background: #E6F4F1;
+    --white: #FFFFFF;
+    --text: #333333;
+  }
+  body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: #f4f6f9;
+  }
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background: var(--primary);
+    color: var(--white);
+  }
+  .logo {
+    font-size: 22px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+  }
+    .nav-links a {
+    margin-left: 20px;
+    color: var(--white);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 5px 0;
+    transition: color 0.3s, border-bottom 0.3s;
+  }
+  .nav-links a.active {
+    border-bottom: 2px solid var(--white);
+  }
+  .nav-links a:hover {
+    color: var(--secondary);
+    border-bottom: 2px solid var(--secondary);
+  }
+
+  .main-layout {
+    display: flex;
+  }
+  /* Sidebar */
+  .sidebar {
+    width: 200px;
+    background: var(--secondary);
+    min-height: 100vh;
+    padding-top: 20px;
+  }
+  .sidebar ul {
+    list-style: none;
+    padding: 0;
+  }
+  .sidebar li {
+    margin: 15px 0;
+  }
+  .sidebar a {
+    text-decoration: none;
+    color: var(--white);
+    font-weight: 500;
+    padding: 10px 20px;
+    display: block;
+    border-radius: 6px;
+  }
+  .sidebar a.active, .sidebar a:hover {
+    background: var(--primary);
+    color: var(--white);
+  }
+
+  .services-content {
+    flex: 1;
+    padding: 20px;
+  }
+  .services-content h2 {
+    color: var(--primary);
+    margin-bottom: 5px;
+  }
+  .subtitle {
+    color: gray;
+    margin-bottom: 20px;
+  }
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+  }
+  .service-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .service-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+  }
+  .service-card h3 {
+    color: var(--primary);
+    margin-bottom: 10px;
+  }
+  .service-card p {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 15px;
+  }
+  .service-card .timing {
+    display: block;
+    font-size: 13px;
+    color: #777;
+    margin-bottom: 10px;
+  }
+  .service-card button {
+    padding: 8px 15px;
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    transition: background 0.2s ease;
+  }
+  .service-card button:hover {
+    background: var(--secondary);
+  }
+
+  /* Action card buttons (as requested) */
+  .action-card button {
+    margin-top: 10px;
+    padding: 8px 15px;
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+  }
+  .action-card button:hover {
+    background: var(--secondary);
+  }
+</style>
+
+<script>
+  function bookService(service) {
+    alert("Redirecting to book token page for " + service);
+    window.location.href = "book-token.html?dept=" + encodeURIComponent(service);
+  }
+</script>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">

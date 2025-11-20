@@ -1,0 +1,238 @@
+<!-- Full Dashboard Page for New User -->
+
+<!-- Header Section (same as Landing Page) -->
+<header class="header">
+  <div class="logo">
+    <img src="https://cdn-icons-png.flaticon.com/512/6205/6205008.png" alt="MediQueue Logo" style="height:40px; vertical-align:middle; margin-right:8px;">
+    MediQueue
+  </div>
+  <nav class="nav-links">
+    <a href="landing page.html">Home</a> <!-- ✅ Fixed link -->
+    <a href="dashboard.html" class="active">Dashboard</a>
+    <a href="services.html">Services</a>
+    <a href="logout.html">Logout</a>
+  </nav>
+</header>
+
+<div class="main-layout">
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar">
+    <ul>
+      <li><a href="dashboard.html" class="active">Dashboard</a></li>
+      <li><a href="book_now.html">Book Token</a></li> <!-- ✅ Updated -->
+      <li><a href="queue.html">View Queue Status</a></li>
+      <li><a href="history.html">My Tokens</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="profile.html">Profile</a></li>
+      <li><a href="settings.html">Settings</a></li>
+    </ul>
+  </aside>
+
+  <!-- Dashboard Content -->
+  <div class="dashboard-content">
+    <!-- Welcome Section -->
+    <div class="welcome-box">
+      <h2>Welcome, User 👋</h2> <!-- ✅ Will be replaced dynamically -->
+      <p>You don’t have any bookings yet. Let’s get started!</p>
+    </div>
+
+    <!-- Quick Action Cards -->
+    <div class="quick-actions">
+      <div class="action-card">
+        <h3>Book Token</h3>
+        <p>Select your department and book your first token.</p>
+        <button onclick="bookToken()">Book Now</button>
+      </div>
+      <div class="action-card">
+        <h3>View Services</h3>
+        <p>Check available hospital services and departments.</p>
+        <button onclick="viewServices()">View Services</button>
+      </div>
+      <div class="action-card">
+        <h3>Need Help?</h3>
+        <p>Get support on how to use the app or contact assistance.</p>
+        <button onclick="getHelp()">Help Center</button>
+      </div>
+    </div>
+
+    <!-- Info Section -->
+    <div class="info-section">
+      <h3>Why Use MediQueue?</h3>
+      <ul>
+        <li>Save hours of waiting at the hospital</li>
+        <li>Get real-time updates on your queue</li>
+        <li>Receive reminders and notifications</li>
+        <li>Manage all your hospital visits in one place</li>
+      </ul>
+    </div>
+
+    <!-- Empty State Visual -->
+    <div class="empty-state">
+      <p>No appointments yet. Book your first token now 🚀</p>
+    </div>
+  </div>
+</div>
+
+<style>
+  :root {
+    --primary: #4AB0A6;
+    --secondary: #2C7A7B;
+    --background: #E6F4F1;
+    --white: #FFFFFF;
+    --text: #333333;
+  }
+
+  body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: var(--background);
+    color: var(--text);
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background: var(--primary);
+    color: var(--white);
+  }
+  .logo {
+    font-size: 22px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+  }
+  .nav-links a {
+    margin-left: 20px;
+    color: var(--white);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 5px 0;
+    transition: color 0.3s, border-bottom 0.3s;
+  }
+  .nav-links a.active {
+    border-bottom: 2px solid var(--white);
+  }
+  .nav-links a:hover {
+    color: var(--secondary);
+    border-bottom: 2px solid var(--secondary);
+  }
+
+  .main-layout {
+    display: flex;
+  }
+  .sidebar {
+    width: 200px;
+    background: var(--secondary);
+    min-height: 100vh;
+    padding-top: 20px;
+  }
+  .sidebar ul {
+    list-style: none;
+    padding: 0;
+  }
+  .sidebar li {
+    margin: 15px 0;
+  }
+  .sidebar a {
+    text-decoration: none;
+    color: var(--white);
+    font-weight: 500;
+    padding: 10px 20px;
+    display: block;
+    border-radius: 6px;
+  }
+  .sidebar a.active, .sidebar a:hover {
+    background: var(--primary);
+    color: var(--white);
+  }
+  .dashboard-content {
+    flex: 1;
+    padding: 20px;
+  }
+  .welcome-box {
+    background: var(--background);
+    border-left: 5px solid var(--primary);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+  .welcome-box h2 {
+    margin: 0;
+    color: var(--secondary);
+  }
+  .quick-actions {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .action-card {
+    flex: 1;
+    min-width: 220px;
+    background: var(--white);
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  }
+  .action-card h3 {
+    color: var(--secondary);
+    margin-bottom: 10px;
+  }
+  .action-card button {
+    margin-top: 10px;
+    padding: 8px 15px;
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+  }
+  .action-card button:hover {
+    background: var(--secondary);
+  }
+  .info-section {
+    margin-top: 20px;
+    padding: 15px;
+    background: var(--white);
+    border-radius: 8px;
+  }
+  .info-section h3 {
+    color: var(--secondary);
+  }
+  .empty-state {
+    margin-top: 25px;
+    text-align: center;
+    color: gray;
+    font-style: italic;
+  }
+</style>
+
+<script>
+  // ✅ Show username + check login session
+  document.addEventListener("DOMContentLoaded", () => {
+    const userName = localStorage.getItem("userName") || "User";
+    document.querySelector(".welcome-box h2").textContent = `Welcome, ${userName} 👋`;
+
+    // Redirect if not logged in
+    if (!sessionStorage.getItem("userEmail")) {
+      window.location.href = "landing page.html";
+    }
+  });
+
+  function bookToken() {
+    window.location.href = "book_now.html"; // ✅ Updated
+  }
+  function viewServices() {
+    window.location.href = "services.html";
+  }
+  function getHelp() {
+    window.location.href = "help_center.html"; // ✅ Updated
+  }
+</script>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">

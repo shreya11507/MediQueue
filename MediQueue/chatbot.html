@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MediQueue Assistant</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    /* Floating Chat Button */
+    .chat-button {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #0d9488;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      cursor: pointer;
+      font-size: 24px;
+      box-shadow: 0px 4px 6px rgba(0,0,0,0.2);
+    }
+
+    /* Chat Window */
+    .chat-window {
+      position: fixed;
+      bottom: 90px;
+      right: 20px;
+      width: 350px;
+      max-height: 500px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      background: #0d9488;
+      color: white;
+      padding: 12px;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chat-body {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      background: #f9f9f9;
+    }
+
+    .chat-footer {
+      display: flex;
+      border-top: 1px solid #ddd;
+    }
+
+    .chat-footer input {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      outline: none;
+    }
+
+    .chat-footer button {
+      background: #0d9488;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      cursor: pointer;
+    }
+
+    .message {
+      margin: 8px 0;
+      padding: 10px;
+      border-radius: 8px;
+      max-width: 75%;
+      clear: both;
+    }
+
+    .bot-message {
+      background: #e0f7f4;
+      float: left;
+    }
+
+    .user-message {
+      background: #0d9488;
+      color: white;
+      float: right;
+    }
+
+    .faq-buttons {
+      margin-top: 10px;
+    }
+
+    .faq-buttons button {
+      display: block;
+      width: 100%;
+      background: #e6f4f1;
+      border: none;
+      padding: 8px;
+      margin: 5px 0;
+      border-radius: 5px;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .faq-buttons button:hover {
+      background: #d1ebe7;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Chat Button -->
+  <button class="chat-button" onclick="toggleChat()">💬</button>
+
+  <!-- Chat Window -->
+  <div class="chat-window" id="chatWindow">
+    <div class="chat-header">
+      MediQueue Assistant
+      <span style="cursor:pointer;" onclick="toggleChat()">✖</span>
+    </div>
+    <div class="chat-body" id="chatBody">
+      <div class="message bot-message">
+        Hello 👋 I’m your MediQueue Assistant.  
+        How can I help you today?
+      </div>
+      <div id="faqContainer"></div>
+    </div>
+    <div class="chat-footer">
+      <input type="text" id="userInput" placeholder="Type a message..." onkeypress="handleKey(event)">
+      <button onclick="sendMessage()">➤</button>
+    </div>
+  </div>
+
+  <script>
+    function toggleChat() {
+      const chat = document.getElementById("chatWindow");
+      chat.style.display = (chat.style.display === "flex") ? "none" : "flex";
+    }
+
+    function sendMessage() {
+      const input = document.getElementById("userInput");
+      const text = input.value.trim();
+      if (text === "") return;
+
+      addMessage(text, "user-message");
+      input.value = "";
+
+      // Simple bot response
+      setTimeout(() => {
+        if (text.toLowerCase().includes("book")) {
+          faqAnswer("book", true);
+        } else if (text.toLowerCase().includes("turn")) {
+          faqAnswer("turn", true);
+        } else if (text.toLowerCase().includes("mobile")) {
+          faqAnswer("mobile", true);
+        } else if (text.toLowerCase().includes("pay")) {
+          faqAnswer("payment", true);
+        } else {
+          addMessage("I’m here to help! Try asking about booking, turn updates, mobile use, or payments.", "bot-message");
+          showFaqButtons();
+        }
+      }, 500);
+    }
+
+    function handleKey(event) {
+      if (event.key === "Enter") {
+        sendMessage();
+      }
+    }
+
+    function addMessage(text, type) {
+      const chatBody = document.getElementById("chatBody");
+      const msg = document.createElement("div");
+      msg.className = "message " + type;
+      msg.innerHTML = text;
+      chatBody.appendChild(msg);
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    function showFaqButtons() {
+      const faqContainer = document.getElementById("faqContainer");
+      faqContainer.innerHTML = `
+        <div class="faq-buttons">
+          <button onclick="faqAnswer('book')">How do I book a token?</button>
+          <button onclick="faqAnswer('turn')">How will I know my turn is near?</button>
+          <button onclick="faqAnswer('mobile')">Can I use MediQueue on my mobile?</button>
+          <button onclick="faqAnswer('payment')">Do I need to pay online?</button>
+        </div>
+      `;
+      document.getElementById("chatBody").scrollTop = document.getElementById("chatBody").scrollHeight;
+    }
+
+    function faqAnswer(type, skipUserMessage = false) {
+      let question = "";
+      let answer = "";
+
+      if (type === "book") {
+        question = "How do I book a token?";
+        answer = "📌 To book a token, simply go to the 'Book Token' page, choose your department, and confirm your booking. You’ll instantly receive your token number!";
+      } else if (type === "turn") {
+        question = "How will I know my turn is near?";
+        answer = "⏳ You’ll receive live updates on your dashboard and get a notification when your turn is approaching. Stay tuned to avoid missing it!";
+      } else if (type === "mobile") {
+        question = "Can I use MediQueue on my mobile?";
+        answer = "📱 Absolutely! MediQueue works smoothly on both mobile and desktop browsers, so you can manage everything on the go.";
+      } else if (type === "payment") {
+        question = "Do I need to pay online?";
+        answer = "💰 No online payments required! You only book a token online, and payments (if any) are done directly at the hospital.";
+      }
+
+      // Show user question (unless already typed in input)
+      if (!skipUserMessage) {
+        addMessage(question, "user-message");
+      }
+
+      // Show bot answer
+      setTimeout(() => {
+        addMessage(answer, "bot-message");
+        showFaqButtons(); // Re-show questions after every answer
+      }, 400);
+    }
+
+    // Initial FAQ load
+    showFaqButtons();
+  </script>
+
+</body>
+</html>

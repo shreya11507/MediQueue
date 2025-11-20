@@ -1,0 +1,266 @@
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+<meta charset="UTF-8"> 
+<meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+<title>MediQueue - Live Queue Status</title> 
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet"> 
+<style> 
+:root {   
+  --primary: #4AB0A6;   
+  --secondary: #2C7A7B;   
+  --background: #E6F4F1;   
+  --white: #FFFFFF;   
+  --text: #333333;   
+  --accent: #FFD700; 
+}  
+
+
+body { margin:0; font-family:'Poppins',sans-serif; background: var(--background); display:flex;}  
+
+/* Sidebar */ 
+.sidebar { width: 200px; background: var(--secondary); min-height: 100vh; padding-top: 20px;} 
+.sidebar ul { list-style: none; padding: 0; } 
+.sidebar li { margin: 15px 0; } 
+.sidebar a { text-decoration: none; color: var(--white); padding: 10px 15px; display: block; border-radius: 8px; transition: background 0.3s; } 
+.sidebar a:hover { background: var(--primary); }  
+
+/* Main content wrapper */ 
+.main-wrapper { flex:1; display:flex; flex-direction:column; }  
+
+/* Header */ 
+.header { display:flex; justify-content:space-between; align-items:center; padding:15px 30px; background:var(--primary); color:var(--white);} 
+.logo { font-size:22px; font-weight:bold; display:flex; align-items:center;} 
+.nav-links a { margin-left:20px; color:var(--white); text-decoration:none; font-weight:500; padding:5px 0; transition: color 0.3s; } 
+.nav-links a.active { border-bottom:2px solid var(--white);} 
+.nav-links a:hover { color:var(--secondary); border-bottom:2px solid var(--secondary); }  
+
+.content { padding:20px; } 
+h1 { color: var(--primary); margin-bottom:10px;} 
+.subtitle { color: gray; margin-bottom:20px;}  
+
+/* Department Card */ 
+.department-card { background: var(--white); border-radius:12px; padding:15px 20px; margin-bottom:15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); position: relative; overflow: hidden;} 
+.department-name { font-size:18px; font-weight:600; margin-bottom:5px;} 
+.department-info { display:flex; justify-content:space-between; font-size:14px; color:#555; margin-bottom:8px;}  
+
+/* Ambulance Road Progress */ 
+.ambulance-track { position: relative; width: 100%; height: 16px; background: #c9d6df; border-radius: 999px; overflow: hidden;} 
+.road-progress { position: absolute; inset: 0; width: 0%; background: #000; transition: width 0.8s ease;} 
+.road-progress::after { content: ""; position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: repeating-linear-gradient(to right, white 0 10px, transparent 10px 20px); transform: translateY(-50%);} 
+.ambulance { position: absolute; top: 50%; left: 0%; transform: translate(-50%, -50%); font-size: 22px; line-height: 1; transition: left 0.8s ease;}  
+
+/* KPI Dashboard */ 
+.kpi-dashboard { display: grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); gap: 15px; margin-bottom: 20px;} 
+.kpi-card { background: var(--white); border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.08);} 
+.kpi-value { font-size: 22px; font-weight: 700; color: var(--secondary); margin-bottom: 6px;} 
+.kpi-label { font-size: 13px; font-weight: 500; color: #666;}  
+
+/* Queue Tracker */ 
+.queue-map { background: #fff; border-radius:12px; padding:15px; margin:20px 0; box-shadow:0 4px 10px rgba(0,0,0,0.08); position:relative; overflow:hidden;} 
+.queue-track-container { position:relative; margin-top:24px; } 
+.queue-track { display:flex; align-items:center; gap:12px; overflow-x:auto; padding:10px 0; scroll-behavior: smooth; } 
+.queue-token { width:40px; height:40px; border-radius:50%; background: #eee; display:flex; justify-content:center; align-items:center; font-weight:600; flex-shrink:0; position:relative; } 
+.queue-token.done { background: var(--secondary); opacity:0.6; } 
+.avatar { width:36px; height:36px; font-size:24px; position:absolute; top:-60px; transition:left 1s; }  
+
+/* Status & Achievements */ 
+.status-box { background: var(--white); padding:15px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.08); margin-bottom:20px;} 
+.status-box p { margin:5px 0; font-weight:500; }  
+
+/* Modals */ 
+.modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:1000;} 
+.modal-content { background: var(--white); padding:25px; border-radius:12px; text-align:center; width:350px; max-width:90%; position:relative; animation: fadeIn 0.4s;} 
+.modal-close { position:absolute; top:10px; right:12px; cursor:pointer; font-size:20px; color:#333; }  
+
+/* Animations */ 
+@keyframes fadeIn { 0% { opacity:0; } 100% { opacity:1; } } 
+</style> 
+</head> 
+<body>  
+
+<!-- Sidebar --> 
+<div class="sidebar">   
+  <ul>     
+    <li><a href="dashboard.html">Dashboard</a></li>     
+    <li><a href="book.html">Book Appointment</a></li>     
+    <li><a href="token.html">View Token</a></li>     
+    <li><a href="livequeue.html">Live Queue Status</a></li>     
+    <li><a href="profile.html">Profile</a></li>   
+  </ul> 
+</div>  
+
+<!-- Main Wrapper --> 
+<div class="main-wrapper">  
+
+<header class="header">   
+  <div class="logo">🏥 MediQueue</div>   
+  <nav class="nav-links">     
+    <a href="landing page.html">Home</a>     
+    <a href="dashboard.html">Dashboard</a>     
+    <a href="services.html">Services</a>     
+    <a href="logout.html">Logout</a>   
+  </nav> 
+</header>  
+
+<div class="content"> 
+<h1>🩺 Live Queue Status</h1> 
+<p class="subtitle">Watch your token progress in real-time!</p>  
+
+<div id="departmentsContainer"></div>  
+
+<!-- KPI Dashboard --> 
+<div class="kpi-dashboard" id="kpiDashboard"></div>  
+
+<div class="queue-map">   
+  <h3>Your Token Path</h3>   
+  <div class="queue-track-container" style="margin-top:1.5cm;">     
+    <div class="avatar" id="avatar">🧍</div>     
+    <div class="queue-track" id="queueTrack"></div>   
+  </div>   
+  <p id="aheadText" style="font-weight:500; color:#555; margin-top:10px;"></p> 
+</div>  
+
+<div class="status-box" id="statusBox">   
+  <p>Token: - | Position: - | ETA: -</p>   
+  <p id="achievementBox"></p> 
+</div>  
+
+<!-- General Modal Template --> 
+<div class="modal" id="popupModal">   
+  <div class="modal-content">     
+    <span class="modal-close" onclick="closePopup()">×</span>     
+    <div id="popupMessage"></div>   
+  </div> 
+</div>  
+
+<!-- ✅ Notification Sound -->
+<audio id="dingSound" src="https://assets.mixkit.co/sfx/download/mixkit-bell-notification-933.wav"></audio>
+
+</div><!-- content end --> 
+</div><!-- main-wrapper end -->  
+
+<script> 
+let userToken = {id:"T2363", dept:"General Medicine", position:5, eta:25, totalInQueue:15};  
+
+// Department card 
+const deptContainer = document.getElementById('departmentsContainer'); 
+const card = document.createElement('div'); 
+card.className="department-card"; 
+card.innerHTML=`   
+  <div class="department-name">💊 ${userToken.dept}</div>   
+  <div class="department-info">     
+    <span>Waiting: ${userToken.totalInQueue}</span>     
+    <span>Avg: ${userToken.eta} min</span>   
+  </div>   
+  <div class="ambulance-track">     
+    <div class="road-progress" id="roadProgress"></div>     
+    <div class="ambulance" id="ambulance"><span style="display:inline-block; transform: scaleX(-1);">🚑</span></div>   
+  </div> `; 
+deptContainer.appendChild(card);  
+
+// KPI Dashboard 
+const kpiDashboard = document.getElementById("kpiDashboard"); 
+kpiDashboard.innerHTML = `   
+  <div class="kpi-card">     
+    <div class="kpi-value">${userToken.id}</div>     
+    <div class="kpi-label">Your Token</div>   
+  </div>   
+  <div class="kpi-card">     
+    <div class="kpi-value">${userToken.totalInQueue}</div>     
+    <div class="kpi-label">Total in Queue</div>   
+  </div>   
+  <div class="kpi-card">     
+    <div class="kpi-value">${userToken.eta} min</div>     
+    <div class="kpi-label">Estimated Wait</div>   
+  </div>   
+  <div class="kpi-card">     
+    <div class="kpi-value">${Math.round(((userToken.totalInQueue-userToken.position+1)/userToken.totalInQueue)*100)}%</div>     
+    <div class="kpi-label">Progress</div>   
+  </div> `;  
+
+// Queue path 
+const queueTrack = document.getElementById('queueTrack'); 
+const avatar = document.getElementById('avatar'); 
+for(let i=1;i<=userToken.totalInQueue;i++){   
+  const token = document.createElement('div');   
+  token.className="queue-token";   
+  token.innerText=i;   
+  if(i<userToken.position) token.classList.add("done");   
+  queueTrack.appendChild(token); 
+}  
+
+// Avatar + Road progress 
+function updateAvatar(){   
+  const tokens = document.querySelectorAll('.queue-token');   
+  const targetToken = tokens[userToken.position-1];   
+  if(targetToken){     
+    avatar.style.left = `${targetToken.offsetLeft}px`;     
+    avatar.style.top = `-${36 + 24}px`;     
+    queueTrack.parentElement.scrollLeft = targetToken.offsetLeft - 80;   
+  }   
+  const aheadCount = userToken.position - 1;   
+  document.getElementById('aheadText').innerText = aheadCount > 0 ? `${aheadCount} ahead of you` : `You are next!`;    
+
+  const ambulance = document.getElementById("ambulance");   
+  const roadProgress = document.getElementById("roadProgress");   
+  if(ambulance && roadProgress){     
+    const percent = Math.min(((userToken.totalInQueue - userToken.position + 1) / userToken.totalInQueue) * 100, 100);     
+    roadProgress.style.width = `${percent}%`;     
+    ambulance.style.left = `${percent}%`;   
+  } 
+} 
+updateAvatar();  
+
+// Status box 
+const statusBox = document.getElementById('statusBox'); 
+statusBox.querySelector("p").innerText = `Token: ${userToken.id} | Position: ${userToken.position} | ETA: ${userToken.eta} min`; 
+document.getElementById('achievementBox').innerText="🏆 Keep watching your avatar move forward!";  
+
+// ✅ Play Ding Sound
+function playDing() {
+  const sound = document.getElementById("dingSound");
+  sound.currentTime = 0;
+  sound.play();
+}
+
+// Popup Functions 
+function showPopup(message){ 
+  document.getElementById("popupMessage").innerHTML = message; 
+  document.getElementById("popupModal").style.display="flex"; 
+  playDing(); // ✅ Play sound on popup open
+} 
+function closePopup(){ document.getElementById("popupModal").style.display="none"; }  
+
+// Gamified movement with popups 
+function moveAvatarForward(){   
+  if(userToken.position > 1){     
+    userToken.position--;      
+    updateAvatar();     
+    statusBox.querySelector("p").innerText = `Token: ${userToken.id} | Position: ${userToken.position} | ETA: ${userToken.eta} min`;     
+
+    // Show popup when 5th 
+    if(userToken.position === 5){ 
+      showPopup(`⏳ You’re getting closer!<br><br>Token: <b>${userToken.id}</b><br>Position: 5th in queue<br><br>Please get ready – your turn is coming soon 🚑`); 
+    } 
+
+    // Show popup when next 
+    if(userToken.position === 1){ 
+      showPopup(`🚨 It’s almost your turn!<br><br>Token: <b>${userToken.id}</b><br>Position: Next in queue<br><br>Please proceed to the doctor’s room 🏥`); 
+    } 
+
+  } else {     
+    clearInterval(progressInterval);     
+    document.getElementById('achievementBox').innerText = "🎉 Your turn has arrived!";   
+  } 
+} 
+
+// Entry popup on load 
+window.onload = ()=>{ 
+  showPopup(`🎉 Welcome to MediQueue!<br><br>✅ You’re now in the queue.<br>Your Token: <b>${userToken.id}</b><br>ETA: ${userToken.eta} minutes ⏳<br><br>We’ll notify you as your turn comes closer 🚑`); 
+}; 
+
+let progressInterval = setInterval(moveAvatarForward, 5000); 
+</script> 
+</body> 
+</html>

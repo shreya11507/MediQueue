@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MediQueue Admin – Availability</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #4AB0A6;
+      --secondary: #2C7A7B;
+      --background: #E6F4F1;
+      --surface: #ffffff;
+      --muted: #8AA6A3;
+      --text: #333333;
+      --danger: #E76F51;
+      --warning: #F4A261;
+      --success: #2A9D8F;
+      --info: #3A86FF;
+      --border: #d5e6e3;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin:0; font-family: 'Poppins', sans-serif; color: var(--text); }
+    body { background: linear-gradient(180deg, var(--background), #f7fbfa 40%); }
+
+    /* Layout */
+    .app {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      grid-template-rows: 64px 1fr;
+      grid-template-areas:
+        "header header"
+        "sidebar main";
+      min-height: 100vh;
+    }
+
+    header {
+      grid-area: header;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      color: #fff;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px; height: 64px;
+      position: sticky; top: 0; z-index: 60;
+      box-shadow: 0 2px 8px rgba(18,52,59,0.06);
+    }
+    header .toolbar { display:flex; gap:12px; align-items:center; color:#fff; }
+    header .toolbar strong { font-weight:700; }
+
+    /* Sidebar */
+    aside.sidebar {
+      grid-area: sidebar;
+      background: var(--secondary);
+      color: #fff;
+      padding: 20px 14px;
+      position: sticky;
+      top: 64px;
+      height: calc(100vh - 64px);
+      overflow-y: auto;
+    }
+
+    .brand {
+      font-weight: 700;
+      font-size: 18px;
+      color:#fff;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .nav {
+      margin-top:20px;
+      display:grid;
+      gap:8px;
+    }
+
+    .nav button {
+      all:unset;
+      cursor:pointer;
+      padding:12px 14px;
+      border-radius:12px;
+      color:#fff;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      width:100%;
+      transition: background 0.2s;
+    }
+
+    .nav button:hover {
+      background: rgba(255,255,255,0.08);
+    }
+
+    .nav button.active {
+      background: rgba(255,255,255,0.12);
+      font-weight:700;
+      border-left:4px solid var(--background);
+      padding-left:10px;
+    }
+
+    /* Main Content */
+    main { grid-area: main; padding: 24px; }
+    .section { display:block; }
+    .card { background: var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px; box-shadow:0 10px 20px rgba(18,52,59,0.04); }
+    .card h3 { margin:0 0 12px; font-size:16px; color:var(--secondary); }
+    .toolbar { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+    .toolbar .spacer { flex:1; }
+    input, select, button { font-family:inherit; border:1px solid var(--border); border-radius:12px; padding:10px 12px; }
+    button { cursor:pointer; }
+    .btn-primary { background: var(--primary); color:#fff; border:none; }
+
+    /* Slots grid */
+    #avSlots { display:flex; flex-wrap:wrap; gap:10px; margin-top:15px; }
+    #avSlots .slot {
+      flex:1 0 100px; padding:12px;
+      border:1px solid var(--primary); border-radius:10px;
+      text-align:center; cursor:pointer; transition:0.2s; user-select:none;
+    }
+    #avSlots .slot:hover { background: var(--background); }
+    #avSlots .slot.selected { background: var(--danger); color:#fff; border-color: var(--danger); }
+    .muted { color: var(--muted); font-size:12px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header>
+      <div class="toolbar">
+        <strong>Admin Panel</strong>
+        <span class="muted">— Manage doctor availability</span>
+      </div>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">🏥 MediQueue Admin</div>
+      <nav class="nav">
+        <button onclick="location.href='admin_dashboard.html'" class="active">📊 Dashboard</button>
+        <button onclick="location.href='availability.html'">🗓️ Doctor Availability</button>
+        <button onclick="location.href='admin_queue.html'">📋 Live Queue</button>
+        <button onclick="location.href='report.html'">📈 Reports</button>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main>
+      <section id="availability" class="section">
+        <div class="card">
+          <h3>Mark Doctor Unavailable Slots (Next 3 Days)</h3>
+          <div class="toolbar" style="margin-bottom: 12px;">
+            <label>
+              Doctor
+              <select id="avDoctor">
+                <option>Dr. Aisha Khan — Cardiology</option>
+                <option>Dr. Rohit Mehta — Pediatrics</option>
+                <option>Dr. Priya Sharma — Dermatology</option>
+              </select>
+            </label>
+            <label>
+              Date
+              <input type="date" id="avDate" />
+            </label>
+            <div class="spacer"></div>
+            <button id="saveAvailability" class="btn-primary">💾 Save Unavailable</button>
+          </div>
+          <div class="muted" style="margin-bottom:10px">
+            Only dates from today up to +3 days are allowed. Unavailable slots become unclickable for patients.
+          </div>
+          <div class="slots" id="avSlots"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const avSlotsContainer = document.getElementById("avSlots");
+    const avDate = document.getElementById("avDate");
+    const avDoctor = document.getElementById("avDoctor");
+    const saveBtn = document.getElementById("saveAvailability");
+
+    // Generate slots every 2 hours from 09:00 to 17:00
+    const avSlotTimes = ["09:00","11:00","13:00","15:00","17:00"];
+
+    function renderAvSlots() {
+      avSlotsContainer.innerHTML = "";
+      avSlotTimes.forEach(time => {
+        const div = document.createElement("div");
+        div.className = "slot";
+        div.innerText = time;
+        div.onclick = () => div.classList.toggle("selected");
+        avSlotsContainer.appendChild(div);
+      });
+    }
+
+    function setAvDateLimits() {
+      const today = new Date();
+      const minDate = today.toISOString().split("T")[0];
+      const maxDate = new Date();
+      maxDate.setDate(today.getDate() + 3);
+      const max = maxDate.toISOString().split("T")[0];
+      avDate.min = minDate;
+      avDate.max = max;
+      avDate.value = minDate;
+    }
+
+    saveBtn.onclick = () => {
+      const doctor = avDoctor.value;
+      const date = avDate.value;
+      const unavailable = [...document.querySelectorAll("#avSlots .slot.selected")].map(s => s.innerText);
+      alert(`Saved unavailable slots for ${doctor} on ${date}:\n${unavailable.join(", ")}`);
+    };
+
+    // Init
+    setAvDateLimits();
+    renderAvSlots();
+  </script>
+</body>
+</html>

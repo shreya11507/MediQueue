@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Token System</title>
+
+  <!-- Google Fonts: Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Firebase SDK (modular) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyApTtdq75BIo7X0eFHTJQk2mPWIGgLLlbE",
+      authDomain: "mediqueue-23532.firebaseapp.com",
+      projectId: "mediqueue-23532",
+      storageBucket: "mediqueue-23532.firebasestorage.app",
+      messagingSenderId: "1094816849809",
+      appId: "1:1094816849809:web:6f96d180ab1dffefaa0430"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const modal = document.getElementById("loginModal");
+      const loginBtn = document.getElementById("loginBtn");
+      const getStartedBtn = document.getElementById("getStartedBtn");
+      const closeModal = document.getElementById("closeModal");
+
+      const roleModal = document.getElementById("roleModal");
+      const closeRoleModal = document.getElementById("closeRoleModal");
+      const patientBtn = document.getElementById("patientBtn");
+      const adminBtn = document.getElementById("adminBtn");
+
+      const loginHereLink = document.querySelector("#loginModal p a");
+
+      loginBtn.onclick = () => { modal.style.display = "flex"; showLoginFields(); }
+      getStartedBtn.onclick = () => { modal.style.display = "flex"; showSignupFields(); }
+      closeModal.onclick = () => { modal.style.display = "none"; }
+      loginHereLink.onclick = () => showLoginFields();
+
+      window.onclick = (event) => {
+        if (event.target == modal) modal.style.display = "none";
+        if (event.target == roleModal) roleModal.style.display = "none";
+      };
+      closeRoleModal.onclick = () => { roleModal.style.display = "none"; }
+
+      function showLoader(message) {
+        hideLoader();
+        const loader = document.createElement("div");
+        loader.id = "pageLoader";
+        loader.innerHTML = `<div style="
+          position:fixed;top:0;left:0;width:100%;height:100%;
+          display:flex;align-items:center;justify-content:center;
+          background:rgba(0,0,0,0.6);color:white;font-size:1.25rem;
+          font-weight:600;z-index:2000;">${message}</div>`;
+        document.body.appendChild(loader);
+      }
+
+      function hideLoader() {
+        const loader = document.getElementById("pageLoader");
+        if (loader) loader.remove();
+      }
+
+      // ✅ Remove patient ID generation from here
+
+      async function saveUserToFirebase(user) {
+        const userRef = doc(db, "users", user.email);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          alert("Email already registered!");
+          return false;
+        } else {
+          await setDoc(userRef, { ...user, role: "" });
+          localStorage.setItem("userName", user.name);
+          sessionStorage.setItem("userEmail", user.email);
+          sessionStorage.setItem("userId", user.email);
+          return true;
+        }
+      }
+
+      async function updateUserRole(email, role) {
+        const userRef = doc(db, "users", email);
+        const updateData = { role };
+
+        await updateDoc(userRef, updateData);
+        localStorage.setItem("userRole", role);
+      }
+
+      let isLogin = false;
+
+      function showSignupFields() {
+        isLogin = false;
+        document.getElementById("fullName").style.display = "block";
+        document.getElementById("dob").style.display = "block";
+        document.getElementById("sex").style.display = "block";
+        document.getElementById("phone").style.display = "block";
+        document.getElementById("submitBtn").textContent = "Continue";
+      }
+
+      function showLoginFields() {
+        isLogin = true;
+        document.getElementById("fullName").style.display = "none";
+        document.getElementById("dob").style.display = "none";
+        document.getElementById("sex").style.display = "none";
+        document.getElementById("phone").style.display = "none";
+        document.getElementById("submitBtn").textContent = "Login";
+      }
+
+      function calculateAge(dob) {
+        const birthDate = new Date(dob);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        return age;
+      }
+
+      const form = document.querySelector("#loginModal form");
+
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById("fullName")?.value.trim();
+        const dob = document.getElementById("dob")?.value;
+        const sex = document.getElementById("sex")?.value;
+        const rawEmail = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+        const phone = document.getElementById("phone")?.value.trim();
+
+        if (!rawEmail || !password || (!isLogin && (!name || !dob || !sex || !phone))) {
+          alert("Please fill all fields.");
+          return;
+        }
+
+        const submitBtn = document.getElementById("submitBtn");
+        submitBtn.disabled = true;
+        submitBtn.textContent = isLogin ? "Logging in..." : "Saving...";
+        showLoader(isLogin ? "Logging in..." : "Saving...");
+
+        try {
+          if (isLogin) {
+            let userSnap = await getDoc(doc(db, "users", rawEmail));
+            let usedEmailId = rawEmail;
+
+            if (!userSnap.exists()) {
+              const lowerEmail = rawEmail.toLowerCase();
+              if (lowerEmail !== rawEmail) {
+                userSnap = await getDoc(doc(db, "users", lowerEmail));
+                usedEmailId = lowerEmail;
+              }
+            }
+
+            if (!userSnap.exists()) {
+              hideLoader();
+              alert("User not found! Please sign up first.");
+              submitBtn.disabled = false;
+              submitBtn.textContent = "Login";
+              return;
+            }
+
+            const userData = userSnap.data();
+
+            if (userData.password !== password) {
+              hideLoader();
+              alert("Incorrect password!");
+              submitBtn.disabled = false;
+              submitBtn.textContent = "Login";
+              return;
+            }
+
+            sessionStorage.setItem("userEmail", usedEmailId);
+            sessionStorage.setItem("userId", usedEmailId);
+            localStorage.setItem("userName", userData.name);
+            modal.style.display = "none";
+            hideLoader();
+
+            if (userData.role && userData.role.trim() !== "") {
+              if (userData.role === "patient") window.location.href = "dashboard.html";
+              else window.location.href = "admin.html"; 
+            } else {
+              roleModal.style.display = "flex";
+            }
+
+          } else {
+            const age = calculateAge(dob);
+            const success = await saveUserToFirebase({ name, dob, age, sex, email: rawEmail, password, phone });
+            if (success) {
+              alert("Saved to Firebase!");
+              modal.style.display = "none";
+              roleModal.style.display = "flex";
+            }
+          }
+        } catch (err) {
+          console.error(err);
+          hideLoader();
+          alert("Error connecting to Firebase.");
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = isLogin ? "Login" : "Continue";
+          hideLoader();
+        }
+      };
+
+      async function chooseRole(role) {
+        const email = sessionStorage.getItem("userEmail");
+        if (!email) { alert("Please sign up / log in first."); return; }
+
+        showLoader("Redirecting...");
+        try {
+          await updateUserRole(email, role);
+
+          if (role === "patient") window.location.href = "dashboard.html";
+          else window.location.href = "admin.html"; 
+        } catch (err) {
+          console.error(err);
+          hideLoader();
+          alert("Error updating role in Firebase.");
+        } finally {
+          hideLoader();
+        }
+      }
+
+      patientBtn.onclick = () => chooseRole("patient");
+      adminBtn.onclick = () => chooseRole("admin");
+    });
+  </script>
+
+  <style>
+    :root { --primary: #4AB0A6; --secondary: #2C7A7B; --background: #E6F4F1; --white: #FFFFFF; --text: #333333; }
+    body { margin: 0; font-family: 'Poppins', sans-serif; background: var(--background); color: var(--text); }
+    a { text-decoration: none; color: inherit; }
+    h1,h2,h3 { margin: 0; }
+    nav { background: var(--primary); color: var(--white); padding: 1rem 5%; display: flex; justify-content: space-between; align-items: center; }
+    nav .logo { font-size: 1.5rem; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+    nav .logo img { width: 40px; height: 40px; border-radius: 50%; }
+    nav ul { list-style: none; display: flex; gap: 1.5rem; margin: 0; }
+    nav ul li a { color: var(--white); font-weight: 500; transition: 0.3s; cursor: pointer; }
+    nav ul li a:hover { color: var(--secondary); }
+    .hero { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 5rem 2rem; background: var(--white); }
+    .hero h1 { font-size: 2.5rem; color: var(--secondary); }
+    .hero p { max-width: 600px; margin: 1rem auto; font-size: 1.1rem; line-height: 1.5; }
+    .hero button { background: var(--primary); color: var(--white); border: none; padding: 0.8rem 2rem; margin-top: 1.5rem; font-size: 1rem; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.3s; }
+    .hero button:hover { background: var(--secondary); }
+    .features { padding: 4rem 5%; text-align: center; }
+    .features h2 { font-size: 2rem; margin-bottom: 2rem; color: var(--secondary); }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; }
+    .feature-card { background: var(--white); padding: 2rem; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); transition: 0.3s; }
+    .feature-card:hover { transform: translateY(-5px); box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
+    .feature-card h3 { color: var(--primary); margin-bottom: 1rem; }
+    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+    .modal-content { background: var(--white); padding: 2rem; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; position: relative; box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+    .modal-content h2 { color: var(--secondary); margin-bottom: 1.5rem; }
+    .modal-content input, .modal-content select { width: 100%; padding: 12px 15px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+    .modal-content button { background: var(--primary); color: var(--white); border: none; padding: 0.8rem; width: 100%; margin-top: 1rem; font-size: 1rem; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.3s; }
+    .modal-content button:hover { background: var(--secondary); }
+    .close { position: absolute; top: 10px; right: 15px; font-size: 1.5rem; cursor: pointer; color: var(--secondary); }
+    .modal-content p { margin-top: 1rem; font-size: 0.9rem; }
+    .modal-content a { color: var(--primary); font-weight: 600; cursor: pointer; }
+    footer { background: var(--secondary); color: var(--white); text-align: center; padding: 1.5rem; margin-top: 3rem; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">
+    <img src="https://cdn-icons-png.flaticon.com/512/6205/6205008.png" alt="logo">
+    MediQueue
+  </div>
+  <ul>
+    <li><a href="#">Home</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a id="loginBtn">Login</a></li>
+    <li><a href="#">About</a></li>
+    <li><a href="#">Contact</a></li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <h1>Smarter Queues, Happier Patients</h1>
+  <p>Our Smart Token & Queue Management System helps hospitals reduce waiting time, improve patient experience, and make healthcare more efficient.</p>
+  <button id="getStartedBtn">Get Started</button>
+</section>
+
+<section id="features" class="features">
+  <h2>Key Features</h2>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <h3>📅 Easy Booking</h3>
+      <p>Book hospital slots and appointments with just a few taps.</p>
+    </div>
+    <div class="feature-card">
+      <h3>🔔 Smart Alerts</h3>
+      <p>Get notified when your turn is near, reducing waiting stress.</p>
+    </div>
+    <div class="feature-card">
+      <h3>👨‍⚕️ Doctor Dashboard</h3>
+      <p>Doctors manage availability and call patients directly.</p>
+    </div>
+    <div class="feature-card">
+      <h3>📊 Analytics</h3>
+      <p>Hospitals track patient flow and optimize efficiency.</p>
+    </div>
+  </div>
+</section>
+
+<div id="loginModal" class="modal">
+  <div class="modal-content">
+    <span class="close" id="closeModal">&times;</span>
+    <h2>Login / Sign Up</h2>
+    <form>
+      <input type="text" id="fullName" placeholder="Full Name">
+      <input type="date" id="dob" placeholder="Date of Birth">
+      <select id="sex">
+        <option value="" disabled selected>Select Sex</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Other">Other</option>
+      </select>
+      <input type="email" id="email" placeholder="Email" required>
+      <input type="password" id="password" placeholder="Password" required>
+      <input type="tel" id="phone" placeholder="Phone">
+      <button type="submit" id="submitBtn">Continue</button>
+    </form>
+    <p>Already have an account? <a>Login here</a></p>
+  </div>
+</div>
+
+<div id="roleModal" class="modal">
+  <div class="modal-content">
+    <span class="close" id="closeRoleModal">&times;</span>
+    <h2>Select Your Role</h2>
+    <p>Please choose your role to continue:</p>
+    <button id="patientBtn">I am a Patient</button>
+    <button id="adminBtn" style="margin-top:10px;">I am an Admin</button>
+  </div>
+</div>
+
+<footer>
+  <p>© 2025 Smart Token System | Designed by Team Hexagon</p>
+</footer>
+
+</body>
+</html>
