@@ -137,7 +137,7 @@ landingpage.html
 ### 🔹 Reports
 <img width="1920" height="1006" alt="screencapture-file-C-Users-rekha-OneDrive-Shreya-Projects-MediQueue-report-html-2025-11-20-18_54_28" src="https://github.com/user-attachments/assets/92eec788-8804-4a0d-8f87-551281d1e5a5" />
 
-### 🔹 Prescription
+### 🔹 Patient Friendly Prescription
 <img width="1920" height="1537" alt="screencapture-file-C-Users-rekha-OneDrive-Shreya-Projects-MediQueue-prescription-html-2025-11-20-18_56_14" src="https://github.com/user-attachments/assets/5c1f3505-fb68-4768-a28c-330ba82acdc1" />
 
 
